@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine # Versión Alpine, súper ligera para no consumir mucha RAM
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=rutaseafit_db
+      - POSTGRES_USER=eafit_admin
+      - POSTGRES_PASSWORD=supersecreto_local
+    ports:
+      - "5433:5432"
+
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_NAME=rutaseafit_db
+      - DB_USER=eafit_admin
+      - DB_PASSWORD=supersecreto_local
+      - DB_HOST=db
+      - DB_PORT=5432
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
