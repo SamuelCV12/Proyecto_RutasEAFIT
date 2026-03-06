@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Finder - RutasEAFIT</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { color: #333; min-height: 100vh; margin: 0; font-family: system-ui, -apple-system, sans-serif; }
+        
+        .bg-fixed-layer { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: -1; background-image: url('https://images.unsplash.com/photo-1697082390649-9c3a253ef8c2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxNZWRlbGxpbiUyMG1ldHJvJTIwY2FibGUlMjBjYXJ8ZW58MXx8fHwxNzcwODUzODMxfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral'); background-size: cover; background-position: center; }
+        .gradient-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom right, rgba(30, 58, 138, 0.85), rgba(55, 48, 163, 0.80), rgba(88, 28, 135, 0.85)); }
+        .pattern-overlay { position: absolute; inset: 0; opacity: 0.1; background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+
+        .glass-header { background-color: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.2); position: sticky; top: 0; z-index: 50; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .glass-card { background-color: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 1rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+
+        .icon-gradient { background: linear-gradient(to bottom right, #2563eb, #4f46e5); border-radius: 0.5rem; padding: 0.5rem; display: inline-flex; }
+        .input-custom { border: none; border-bottom: 1px solid #e5e7eb; border-radius: 0; padding-left: 0; background: transparent; }
+        .input-custom:focus { box-shadow: none; border-color: #4f46e5; background: transparent; }
+        
+        .swap-btn { position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; }
+        .swap-btn:hover { background: #e5e7eb; }
+
+        /* Botones de Filtro Activos/Inactivos */
+        .filter-btn { border: 1px solid #e5e7eb; background-color: white; color: #6b7280; border-radius: 0.75rem; cursor: pointer; transition: all 0.2s; }
+        .filter-btn:hover { border-color: #4F46E5; }
+        .filter-btn.active { background-color: #4F46E5; color: white; border-color: #4F46E5; }
+        .filter-btn.active .text-dark { color: white !important; }
+
+        /* Diseño de la Tarjeta de Resultados Minimalista */
+        .result-card { background: white; border-radius: 1rem; border: 1px solid #e5e7eb; padding: 1.5rem; }
+    </style>
+</head>
+<body>
+
+    <div class="bg-fixed-layer">
+        <div class="gradient-overlay"></div>
+        <div class="pattern-overlay"></div>
+    </div>
+
+    <header class="glass-header py-3">
+        <div class="container" style="max-width: 900px;">
+            <div class="d-flex align-items-center gap-3">
+                <div class="icon-gradient shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/></svg>
+                </div>
+                <div>
+                    <h4 class="mb-0 fw-bold text-dark">Route Finder</h4>
+                    <p class="mb-0 text-muted" style="font-size: 0.8rem;">Medellín Public Transport</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container py-5" style="max-width: 900px; position: relative; z-index: 10;">
+        
+        <div class="glass-card p-4 p-md-5 mb-4">
+            <form method="GET" action="/" id="searchForm">
+                
+                <input type="hidden" name="sort" id="sortInput" value="{{ sort_by }}">
+
+                <div class="position-relative mb-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="me-3 text-success fs-5">◎</span>
+                        <input type="text" id="origenInput" name="origen" class="form-control input-custom form-control-lg text-secondary" placeholder="Where from?" value="{{ origen_buscado }}">
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="me-3 text-danger fs-5">◉</span>
+                        <input type="text" id="destinoInput" name="destino" class="form-control input-custom form-control-lg text-secondary" placeholder="Where to?" value="{{ destino_buscado }}">
+                    </div>
+                    <div style="position: absolute; left: 8px; top: 28px; bottom: 28px; width: 2px; background-color: #e5e7eb;"></div>
+                    <div class="swap-btn shadow-sm" onclick="swapInputs()" title="Intercambiar origen y destino">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="21" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
+                    </div>
+                </div>
+
+                <div class="mb-4 mt-2">
+                    <label class="text-muted small mb-3 fw-bold" style="font-size: 0.85rem;">Prefer routes that are:</label>
+                    <div class="row g-2 text-center">
+                        <div class="col-4">
+                            <div class="p-2 w-100 filter-btn {% if sort_by == 'fastest' %}active{% endif %}" onclick="applySort('fastest')">
+                                <div class="fw-bold text-dark" style="font-size: 0.9rem;">⚡ Fastest</div>
+                                <small style="font-size: 0.65rem; opacity: 0.9;">Shortest time</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 w-100 filter-btn {% if sort_by == 'direct' %}active{% endif %}" onclick="applySort('direct')">
+                                <div class="fw-bold text-dark" style="font-size: 0.9rem;">🛤️ Direct</div>
+                                <small style="font-size: 0.65rem;">Fewer changes</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 w-100 filter-btn {% if sort_by == 'cheapest' %}active{% endif %}" onclick="applySort('cheapest')">
+                                <div class="fw-bold text-dark" style="font-size: 0.9rem;">💰 Cheapest</div>
+                                <small style="font-size: 0.65rem;">Best price</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn w-100 py-3 mt-2 shadow-sm fw-bold" style="background-color: #f3f4f6; color: #4b5563; border-radius: 0.75rem;">
+                    🔍 Find Routes
+                </button>
+            </form>
+        </div>
+
+        {% if origen_buscado or destino_buscado %}
+            <div class="glass-card p-4 p-md-5">
+                
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-primary rounded-circle px-2 py-1 fs-6">{{ rutas|length }}</span>
+                        <span class="fs-5 text-dark fw-bold">Route Available</span>
+                    </div>
+                    <span class="badge bg-light text-muted border py-2 px-3 fw-normal" style="font-size: 0.8rem;">
+                        Sorted by preference
+                    </span>
+                </div>
+                
+                {% if rutas %}
+                    {% for ruta in rutas %}
+                    <div class="result-card mb-4 shadow-sm">
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="d-flex gap-2 align-items-center">
+                                {% if sort_by == 'fastest' or sort_by == 'cheapest' %}
+                                    <div style="background-color: #00c853; padding: 4px 10px; border-radius: 12px; color: white; font-size: 0.75rem; font-weight: 800; display: flex; align-items: center; gap: 4px;">
+                                        ⭐ BEST
+                                    </div>
+                                {% endif %}
+                                <div style="background-color: #2563eb; color: white; font-weight: bold; padding: 6px 12px; border-radius: 8px; font-size: 0.9rem;">
+                                    {{ ruta.nombre }}
+                                </div>
+                            </div>
+                            <div style="border: 1px solid #bbf7d0; color: #16a34a; background-color: #f0fdf4; font-weight: 600; padding: 4px 12px; border-radius: 8px; font-size: 0.9rem;">
+                                $ {{ ruta.precio }}
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2 mb-3">
+                            <div style="background-color: #eff6ff; color: #2563eb; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; display: inline-flex; align-items: center; gap: 6px;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                {{ ruta.tiempo_estimado_minutos }} min
+                            </div>
+                            
+                            {% if ruta.transbordos == 0 %}
+                                <div style="background-color: #f0fdf4; color: #16a34a; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; display: inline-flex; align-items: center; gap: 6px;">
+                                    <span style="width: 6px; height: 6px; background-color: #16a34a; border-radius: 50%; display: inline-block;"></span>
+                                    Direct route
+                                </div>
+                            {% else %}
+                                <div style="background-color: #fffbeb; color: #d97706; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; display: inline-flex; align-items: center; gap: 6px;">
+                                    <span style="width: 6px; height: 6px; background-color: #d97706; border-radius: 50%; display: inline-block;"></span>
+                                    {{ ruta.transbordos }} Transfers
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <div style="background-color: #eff6ff; color: #2563eb; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/></svg>
+                            </div>
+                        </div>
+
+                        <ul class="list-unstyled mb-4" style="display: flex; flex-direction: column; gap: 10px;">
+                            <li style="display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: #111827; font-weight: 600;">
+                                <span style="width: 8px; height: 8px; background-color: #00c853; border-radius: 50%; display: inline-block; flex-shrink: 0;"></span>
+                                {{ ruta.origen }}
+                            </li>
+                            {% for parada in ruta.get_paradas_list %}
+                                <li style="display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: #6b7280;">
+                                    <span style="width: 8px; height: 8px; background-color: #d1d5db; border-radius: 50%; display: inline-block; flex-shrink: 0;"></span>
+                                    {{ parada }}
+                                </li>
+                            {% endfor %}
+                            <li style="display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: #111827; font-weight: 600;">
+                                <span style="width: 8px; height: 8px; background-color: #ff3b30; border-radius: 50%; display: inline-block; flex-shrink: 0;"></span>
+                                {{ ruta.destino }}
+                            </li>
+                        </ul>
+
+                        <a href="{% url 'detalle_ruta' ruta.id %}" class="btn w-100 py-3 text-white fw-bold d-flex justify-content-center align-items-center gap-2" style="background-color: #2563eb; border-radius: 0.75rem; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.backgroundColor='#1d4ed8'" onmouseout="this.style.backgroundColor='#2563eb'">
+                            Select This Route 
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                        </a>
+
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mb-3 opacity-50"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <p>No encontramos rutas con esos criterios.</p>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+
+    </main>
+
+    <script>
+        function swapInputs() {
+            const origen = document.getElementById('origenInput');
+            const destino = document.getElementById('destinoInput');
+            const temp = origen.value;
+            origen.value = destino.value;
+            destino.value = temp;
+        }
+
+        function applySort(sortType) {
+            document.getElementById('sortInput').value = sortType;
+            document.getElementById('searchForm').submit();
+        }
+    </script>
+</body>
+</html>
