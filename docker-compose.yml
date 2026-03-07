@@ -12,6 +12,13 @@ services:
     ports:
       - "5433:5432"
 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eafit_admin -d rutaseafit_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      
+
   web:
     build: .
     command: python manage.py runserver 0.0.0.0:8000
@@ -26,7 +33,7 @@ services:
       - DB_HOST=db
       - DB_PORT=5432
     depends_on:
-      - db
-
+      db:
+        condition: service_healthy
 volumes:
   postgres_data:
