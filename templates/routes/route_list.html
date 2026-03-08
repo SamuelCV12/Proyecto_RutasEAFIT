@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  {% if lang == 'es' %}EafitRutas — Rutas desde EAFIT{% else %}EafitRutas — Routes from EAFIT{% endif %}
+{% endblock %}
+
+{% block content %}
+
+<!-- ── Hero ────────────────────────────────────────────────── -->
+<section class="hero-banner">
+  <div class="container position-relative" style="z-index:2;">
+    <div class="hero-route-pill">
+      <i class="bi bi-geo-alt-fill"></i>
+      {% if lang == 'es' %}Área Metropolitana de Medellín{% else %}Medellín Metro Area{% endif %}
+    </div>
+
+    <h1 class="font-sora fw-800 text-white mb-1" style="font-size:clamp(1.5rem,4vw,2.2rem); font-weight:800;">
+      {% if lang == 'es' %}
+        Tu guía de buses paso a paso
+      {% else %}
+        Your step-by-step bus guide
+      {% endif %}
+    </h1>
+
+    <p class="text-white mb-3" style="opacity:0.8; font-size:0.95rem; max-width:520px;">
+      {% if lang == 'es' %}
+        Desde y hacia la Universidad EAFIT — instrucciones claras para cada ruta, sin jerga técnica.
+      {% else %}
+        To and from EAFIT University — plain-language instructions for every route, no transit jargon.
+      {% endif %}
+    </p>
+
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <div class="hero-origin-dest">
+        <span class="hero-place"><i class="bi bi-buildings me-1"></i> EAFIT University</span>
+        <span class="hero-arrow"><i class="bi bi-arrow-left-right"></i></span>
+        <span class="hero-place dest">
+          {% if lang == 'es' %}Tu destino{% else %}Your destination{% endif %}
+        </span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Quick Info Banner ────────────────────────────────────── -->
+<div class="bg-white border-bottom py-3">
+  <div class="container">
+    <div class="d-flex flex-wrap gap-3 align-items-center">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-shield-check text-success"></i>
+        <span class="small fw-500">
+          {% if lang == 'es' %}Guía para principiantes{% else %}Beginner-friendly guide{% endif %}
+        </span>
+      </div>
+      <div class="vr d-none d-md-block"></div>
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-translate" style="color:var(--brand-teal)"></i>
+        <span class="small fw-500">
+          {% if lang == 'es' %}Disponible en inglés y español{% else %}Available in English &amp; Spanish{% endif %}
+        </span>
+      </div>
+      <div class="vr d-none d-md-block"></div>
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-map" style="color:var(--brand-orange)"></i>
+        <span class="small fw-500">
+          {% if lang == 'es' %}Puntos de referencia visuales{% else %}Visual landmarks included{% endif %}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Route Cards ──────────────────────────────────────────── -->
+<div class="container my-4">
+
+  <!-- Page intro -->
+  <div class="mb-4">
+    <h2 class="font-sora fw-700 mb-1" style="font-size:1.15rem;">
+      {% if lang == 'es' %}Selecciona tu ruta{% else %}Select your route{% endif %}
+    </h2>
+    <p class="text-muted small mb-0">
+      {% if lang == 'es' %}
+        Elige la ruta más cercana a tu lugar de residencia.
+      {% else %}
+        Choose the route closest to where you live.
+      {% endif %}
+    </p>
+  </div>
+
+  <div class="row g-3">
+    {% for route in routes %}
+    <div class="col-12 col-md-6 animate-in">
+      <a href="{% url 'routes:route_guide' route.id %}?lang={{ lang }}"
+         class="text-decoration-none">
+        <div class="card-clean route-card p-0">
+          <!-- Card Header -->
+          <div class="p-4 pb-3">
+            <div class="d-flex gap-3 align-items-start">
+              <div class="route-num">{{ route.route_number }}</div>
+              <div class="flex-1">
+                <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                  <span class="font-sora fw-700" style="font-size:1rem;">
+                    {{ route.name }}
+                  </span>
+                  {% if route.route_type == 'express' %}
+                    <span class="badge" style="background:var(--brand-teal);font-size:0.65rem;border-radius:20px;">
+                      {% if lang == 'es' %}Expreso{% else %}Express{% endif %}
+                    </span>
+                  {% endif %}
+                </div>
+                <div class="d-flex align-items-center gap-2 text-muted small">
+                  <i class="bi bi-geo-alt-fill" style="color:var(--brand-orange);font-size:0.75rem;"></i>
+                  <span>{{ route.origin }}</span>
+                  <i class="bi bi-arrow-right" style="font-size:0.65rem;"></i>
+                  <i class="bi bi-pin-map-fill" style="color:var(--brand-navy);font-size:0.75rem;"></i>
+                  <span>{{ route.destination }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <hr class="mx-4 my-0" style="border-color:var(--brand-gray-mid);">
+
+          <!-- Card Stats -->
+          <div class="p-4 pt-3">
+            <div class="row g-3 mb-3">
+              <div class="col-4 text-center">
+                <div class="time-label">
+                  {% if lang == 'es' %}DURACIÓN{% else %}DURATION{% endif %}
+                </div>
+                <div class="font-sora fw-700" style="font-size:1.1rem;">
+                  {{ route.total_duration_minutes }}<span class="small fw-400 text-muted"> min</span>
+                </div>
+              </div>
+              <div class="col-4 text-center border-start border-end" style="border-color:var(--brand-gray-mid)!important;">
+                <div class="time-label">
+                  {% if lang == 'es' %}TARIFA{% else %}FARE{% endif %}
+                </div>
+                <div class="font-sora fw-700" style="font-size:1.1rem;color:var(--brand-teal-dark);">
+                  ${{ route.fare_cop|floatformat:0 }}
+                </div>
+              </div>
+              <div class="col-4 text-center">
+                <div class="time-label">
+                  {% if lang == 'es' %}CADA{% else %}EVERY{% endif %}
+                </div>
+                <div class="font-sora fw-700" style="font-size:1.1rem;">
+                  {{ route.frequency_minutes }}<span class="small fw-400 text-muted"> min</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Amenities & CTA -->
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div class="d-flex gap-2 flex-wrap">
+                {% with stop_count=route.stops.count %}
+                  <span class="info-tag">
+                    <i class="bi bi-sign-stop"></i>
+                    {{ stop_count }}
+                    {% if lang == 'es' %}paradas{% else %}stops{% endif %}
+                  </span>
+                {% endwith %}
+                <span class="info-tag">
+                  <i class="bi bi-bus-front"></i>
+                  {% if lang == 'es' %}Bus particular{% else %}Public bus{% endif %}
+                </span>
+              </div>
+              <span class="btn btn-sm px-3 py-1 font-sora fw-600"
+                    style="background:var(--brand-orange);color:white;border-radius:20px;font-size:0.8rem;">
+                {% if lang == 'es' %}Ver guía <i class="bi bi-arrow-right"></i>
+                {% else %}View guide <i class="bi bi-arrow-right"></i>{% endif %}
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </a>
+    </div>
+    {% empty %}
+    <div class="col-12">
+      <div class="card-clean p-5 text-center text-muted">
+        <i class="bi bi-bus-front" style="font-size:3rem; opacity:0.3;"></i>
+        <p class="mt-3">
+          {% if lang == 'es' %}No hay rutas disponibles todavía.{% else %}No routes available yet.{% endif %}
+        </p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- How it works callout -->
+  <div class="card-clean mt-4 p-4" style="background:linear-gradient(135deg, #FFF7ED, #FFEDE0);">
+    <div class="row align-items-center g-3">
+      <div class="col-auto">
+        <div style="font-size:2.5rem;">🧭</div>
+      </div>
+      <div class="col">
+        <h3 class="font-sora fw-700 mb-1" style="font-size:0.95rem;">
+          {% if lang == 'es' %}¿Primera vez usando buses en Medellín?{% else %}First time using buses in Medellín?{% endif %}
+        </h3>
+        <p class="text-muted small mb-0">
+          {% if lang == 'es' %}
+            Cada guía de ruta te dice exactamente dónde esperar, qué bus tomar, cómo pagar y cuándo bajarte — paso a paso, sin complicaciones.
+          {% else %}
+            Each route guide tells you exactly where to wait, which bus to take, how to pay, and when to get off — step by step, no experience needed.
+          {% endif %}
+        </p>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

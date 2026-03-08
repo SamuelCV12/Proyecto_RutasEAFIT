@@ -1,0 +1,379 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  {% if lang == 'es' %}Guía Paso a Paso — Ruta {{ route.route_number }}{% else %}Step-by-Step Guide — Route {{ route.route_number }}{% endif %}
+{% endblock %}
+
+{% block content %}
+
+<!-- ── Hero ─────────────────────────────────────────────────── -->
+<section class="hero-banner">
+  <div class="container position-relative" style="z-index:2;">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+      <a href="{% url 'routes:route_list' %}?lang={{ lang }}" class="text-white text-decoration-none small"
+         style="opacity:0.7;">
+        <i class="bi bi-arrow-left me-1"></i>
+        {% if lang == 'es' %}Todas las rutas{% else %}All routes{% endif %}
+      </a>
+    </nav>
+
+    <div class="hero-route-pill mb-2">
+      <i class="bi bi-bus-front-fill"></i>
+      {% if lang == 'es' %}Ruta{% else %}Route{% endif %} {{ route.route_number }} &mdash; {{ route.name }}
+    </div>
+
+    <div class="hero-origin-dest mb-3">
+      <span class="hero-place"><i class="bi bi-buildings me-1"></i>{{ route.origin }}</span>
+      <span class="hero-arrow"><i class="bi bi-arrow-right"></i></span>
+      <span class="hero-place dest"><i class="bi bi-pin-map me-1"></i>{{ route.destination }}</span>
+    </div>
+
+    <!-- Departure time selector -->
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <div class="d-flex align-items-center gap-2 p-2 px-3"
+           style="background:rgba(255,255,255,0.15);backdrop-filter:blur(8px);border-radius:12px;border:1px solid rgba(255,255,255,0.2);">
+        <i class="bi bi-clock text-white" style="opacity:0.8;"></i>
+        <label class="text-white small mb-0" style="opacity:0.8;">
+          {% if lang == 'es' %}Salida:{% else %}Depart:{% endif %}
+        </label>
+        <form method="get" id="departure-form" class="d-inline">
+          <input type="hidden" name="lang" value="{{ lang }}">
+          <input type="time" name="departure" value="{{ departure_time_raw }}"
+                 class="border-0 bg-transparent text-white fw-600 font-sora"
+                 style="outline:none;font-size:1rem;width:90px;"
+                 onchange="document.getElementById('departure-form').submit()">
+        </form>
+      </div>
+      <div class="text-white small" style="opacity:0.75;">
+        <i class="bi bi-clock-history me-1"></i>
+        {% if lang == 'es' %}Llegada estimada:{% else %}Est. arrival:{% endif %}
+        <strong>{{ arrival_time }}</strong>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Summary Strip ────────────────────────────────────────── -->
+<div class="bg-white border-bottom py-3">
+  <div class="container">
+    <div class="d-flex align-items-center gap-4 flex-wrap">
+      <div>
+        <div class="time-label">{% if lang == 'es' %}TIEMPO TOTAL{% else %}TOTAL TIME{% endif %}</div>
+        <div class="font-sora fw-700" style="font-size:1rem;">
+          {{ route.total_duration_minutes }} {% if lang == 'es' %}min{% else %}min{% endif %}
+        </div>
+      </div>
+      <div class="flex-1 d-none d-md-block" style="min-width:120px;">
+        <div class="journey-progress">
+          <div class="journey-progress-fill" style="width:0%;transition:width 1.2s ease 0.3s;" id="progressFill"></div>
+        </div>
+      </div>
+      <div>
+        <div class="time-label">{% if lang == 'es' %}PARADAS{% else %}STOPS{% endif %}</div>
+        <div class="font-sora fw-700" style="font-size:1rem;">{{ stops.count }}</div>
+      </div>
+      <div>
+        <div class="time-label">{% if lang == 'es' %}TARIFA{% else %}FARE{% endif %}</div>
+        <div class="font-sora fw-700" style="font-size:1rem;color:var(--brand-teal-dark);">
+          COP ${{ route.fare_cop|floatformat:0 }}
+        </div>
+      </div>
+      <div class="d-flex gap-2 ms-auto">
+        {% if route.route_type == 'express' %}
+          <span class="info-tag orange"><i class="bi bi-lightning-charge-fill"></i>
+            {% if lang == 'es' %}Expreso{% else %}Express{% endif %}
+          </span>
+        {% endif %}
+        <span class="info-tag">
+          <i class="bi bi-bus-front"></i>
+          {% if lang == 'es' %}Bus particular{% else %}Public bus{% endif %}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Main Content ─────────────────────────────────────────── -->
+<div class="container my-4">
+  <div class="row g-4">
+
+    <!-- ── LEFT: Step-by-Step Guide ───────────────────────── -->
+    <div class="col-12 col-lg-7">
+
+      <!-- Section Header -->
+      <div class="section-header">
+        <div class="section-header-icon" style="background:#FFF7ED;">
+          <i class="bi bi-list-ol" style="color:var(--brand-orange);"></i>
+        </div>
+        <div>
+          <p class="section-header-title mb-0">
+            {% if lang == 'es' %}Instrucciones paso a paso{% else %}Step-by-step instructions{% endif %}
+          </p>
+          <p class="section-header-sub">
+            {% if lang == 'es' %}
+              Sigue cada paso en orden — no necesitas experiencia previa
+            {% else %}
+              Follow each step in order — no prior experience needed
+            {% endif %}
+          </p>
+        </div>
+      </div>
+
+      <!-- Steps -->
+      <div class="steps-container">
+        {% for step in steps %}
+        <div class="step-item animate-in" style="animation-delay: {{ forloop.counter0 }}00ms;">
+
+          <!-- Icon -->
+          <div class="step-icon-wrap {{ step.step_type }} position-relative" style="margin-top:4px;">
+            {% if step.step_type == 'walk' %}
+              <i class="bi bi-person-walking"></i>
+            {% elif step.step_type == 'wait' %}
+              <i class="bi bi-hourglass-split"></i>
+            {% elif step.step_type == 'board' %}
+              <i class="bi bi-bus-front-fill"></i>
+            {% elif step.step_type == 'ride' %}
+              <i class="bi bi-signpost-split-fill"></i>
+            {% elif step.step_type == 'transfer' %}
+              <i class="bi bi-arrow-left-right"></i>
+            {% elif step.step_type == 'exit' %}
+              <i class="bi bi-door-open-fill"></i>
+            {% elif step.step_type == 'arrive' %}
+              <i class="bi bi-flag-fill"></i>
+            {% endif %}
+            <span class="step-number">{{ step.step_number }}</span>
+          </div>
+
+          <!-- Content -->
+          <div class="step-content">
+            <!-- Type label -->
+            <div class="step-type-label {{ step.step_type }}">
+              {% if step.step_type == 'walk' %}
+                {% if lang == 'es' %}🚶 CAMINAR{% else %}🚶 WALK{% endif %}
+              {% elif step.step_type == 'wait' %}
+                {% if lang == 'es' %}⏳ ESPERAR{% else %}⏳ WAIT{% endif %}
+              {% elif step.step_type == 'board' %}
+                {% if lang == 'es' %}🚌 SUBIR AL BUS{% else %}🚌 BOARD BUS{% endif %}
+              {% elif step.step_type == 'ride' %}
+                {% if lang == 'es' %}🛣️ VIAJAR{% else %}🛣️ RIDE{% endif %}
+              {% elif step.step_type == 'transfer' %}
+                {% if lang == 'es' %}🔄 TRANSBORDO{% else %}🔄 TRANSFER{% endif %}
+              {% elif step.step_type == 'exit' %}
+                {% if lang == 'es' %}🚪 BAJARSE{% else %}🚪 EXIT{% endif %}
+              {% elif step.step_type == 'arrive' %}
+                {% if lang == 'es' %}🏁 ¡LLEGASTE!{% else %}🏁 ARRIVED!{% endif %}
+              {% endif %}
+            </div>
+
+            <!-- Title -->
+            <div class="step-title">
+              {% if lang == 'es' %}{{ step.title_es }}{% else %}{{ step.title_en }}{% endif %}
+            </div>
+
+            <!-- Description -->
+            <p class="step-desc">
+              {% if lang == 'es' %}{{ step.description_es }}{% else %}{{ step.description_en }}{% endif %}
+            </p>
+
+            <!-- Duration badge -->
+            {% if step.duration_minutes %}
+              <div class="step-duration">
+                <i class="bi bi-clock" style="font-size:0.7rem;"></i>
+                ~{{ step.duration_minutes }}
+                {% if lang == 'es' %}min{% else %}min{% endif %}
+              </div>
+            {% endif %}
+
+            <!-- Tip -->
+            {% if lang == 'es' and step.tip_es %}
+              <div class="step-tip">
+                <span>{{ step.tip_es }}</span>
+              </div>
+            {% elif lang != 'es' and step.tip_en %}
+              <div class="step-tip">
+                <span>{{ step.tip_en }}</span>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- ── RIGHT: Info Sidebar ─────────────────────────────── -->
+    <div class="col-12 col-lg-5">
+
+      <!-- ── All Stops Card ─────────────────────────────── -->
+      <div class="card-clean p-4 mb-3 animate-in">
+        <div class="section-header mb-3">
+          <div class="section-header-icon" style="background:#F0FDF4;">
+            <i class="bi bi-pin-map-fill" style="color:#16A34A;"></i>
+          </div>
+          <div>
+            <p class="section-header-title mb-0">
+              {% if lang == 'es' %}Todas las paradas{% else %}All stops along route{% endif %}
+            </p>
+            <p class="section-header-sub">
+              {% if lang == 'es' %}Salida: {{ departure_time }}{% else %}Depart: {{ departure_time }}{% endif %}
+            </p>
+          </div>
+        </div>
+
+        <div class="stop-timeline">
+          {% for item in stop_schedule %}
+          <div class="stop-row">
+            <!-- Dot -->
+            {% if forloop.first %}
+              <div class="stop-dot first">{{ forloop.counter }}</div>
+            {% elif forloop.last %}
+              <div class="stop-dot last">{{ forloop.counter }}</div>
+            {% elif item.stop.is_transfer_point %}
+              <div class="stop-dot transfer-dot" title="Transfer point">
+                <i class="bi bi-arrow-left-right" style="font-size:0.55rem;"></i>
+              </div>
+            {% else %}
+              <div class="stop-dot middle">{{ forloop.counter }}</div>
+            {% endif %}
+
+            <!-- Info -->
+            <div class="flex-1">
+              <div class="stop-name">
+                {{ item.stop.name }}
+                {% if forloop.first %}
+                  <span class="badge ms-1" style="font-size:0.6rem;background:var(--brand-orange);border-radius:20px;">
+                    {% if lang == 'es' %}Origen{% else %}Start{% endif %}
+                  </span>
+                {% endif %}
+                {% if forloop.last %}
+                  <span class="badge ms-1" style="font-size:0.6rem;background:var(--brand-navy);border-radius:20px;">
+                    {% if lang == 'es' %}Destino{% else %}End{% endif %}
+                  </span>
+                {% endif %}
+                {% if item.stop.is_transfer_point and not forloop.first and not forloop.last %}
+                  <span class="badge ms-1" style="font-size:0.6rem;background:var(--brand-teal);border-radius:20px;">
+                    {% if lang == 'es' %}Transbordo{% else %}Transfer{% endif %}
+                  </span>
+                {% endif %}
+              </div>
+              {% if item.stop.landmark %}
+                <div class="stop-landmark">
+                  <i class="bi bi-geo me-1" style="font-size:0.65rem;"></i>{{ item.stop.landmark }}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="stop-time">{{ item.arrival_time }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- ── Fare & Payment Card ─────────────────────────── -->
+      <div class="card-clean p-4 mb-3 animate-in">
+        <div class="row g-3">
+          <!-- Fare -->
+          <div class="col-6">
+            <div style="background:var(--brand-gray-soft);border-radius:12px;padding:14px;">
+              <div class="time-label mb-1">
+                {% if lang == 'es' %}TARIFA{% else %}FARE{% endif %}
+              </div>
+              <div class="fare-amount">${{ route.fare_cop|floatformat:0 }}</div>
+              <div class="text-muted small mt-1">COP</div>
+            </div>
+          </div>
+          <!-- Payment methods -->
+          <div class="col-6">
+            <div style="background:var(--brand-gray-soft);border-radius:12px;padding:14px;">
+              <div class="time-label mb-2">
+                {% if lang == 'es' %}PAGO{% else %}PAYMENT{% endif %}
+              </div>
+              <div class="d-flex flex-column gap-1">
+                <span class="small d-flex align-items-center gap-1">
+                  <i class="bi bi-cash-coin text-success" style="font-size:0.8rem;"></i>
+                  <span>{% if lang == 'es' %}Solo efectivo{% else %}Cash only{% endif %}</span>
+                </span>
+                <span class="small d-flex align-items-center gap-1 mt-1" style="color:var(--brand-text-muted);">
+                  <i class="bi bi-info-circle" style="font-size:0.8rem;"></i>
+                  <span>{% if lang == 'es' %}Moneda exacta{% else %}Exact change{% endif %}</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cash tip -->
+        <div class="mt-3 p-3 d-flex gap-2 align-items-start"
+             style="background:#F0FDF4;border-radius:10px;border-left:3px solid #16A34A;">
+          <i class="bi bi-cash-stack text-success mt-1" style="font-size:0.9rem; flex-shrink:0;"></i>
+          <div>
+            <div class="small fw-600 text-success mb-1">
+              {% if lang == 'es' %}💵 Pago en efectivo{% else %}💵 Cash payment{% endif %}
+            </div>
+            <div class="small text-muted">
+              {% if lang == 'es' %}
+                Ten $3.800 exactos listos antes de subir. El conductor no siempre tiene cambio. Paga al subir por la puerta delantera.
+              {% else %}
+                Have exact $3,800 COP ready before boarding. The driver may not have change. Pay when boarding at the front door.
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Bus Type Features ───────────────────────────── -->
+      <div class="card-clean p-4 animate-in">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <div class="section-header-icon" style="background:#F5F3FF;">
+            <i class="bi bi-stars" style="color:#8B5CF6;"></i>
+          </div>
+          <p class="section-header-title mb-0">
+            {% if lang == 'es' %}Tipo de bus{% else %}Bus type{% endif %}:
+            <span style="color:var(--brand-teal);">{{ route.name }}</span>
+          </p>
+        </div>
+
+        <div class="d-flex flex-column gap-2">
+          <div class="d-flex align-items-center gap-2 small">
+            <i class="bi bi-check-circle-fill text-success"></i>
+            <span>
+              {% if lang == 'es' %}Bus particular — cubre zonas no servidas por el Metro{% else %}Private bus — covers areas not served by the Metro{% endif %}
+            </span>
+          </div>
+          <div class="d-flex align-items-center gap-2 small">
+            <i class="bi bi-check-circle-fill" style="color:var(--brand-orange);"></i>
+            <span>
+              {% if lang == 'es' %}Solo efectivo — ten $3.800 exactos listos{% else %}Cash only — have exact $3,800 COP ready{% endif %}
+            </span>
+          </div>
+          <div class="d-flex align-items-center gap-2 small">
+            <i class="bi bi-check-circle-fill" style="color:var(--brand-teal);"></i>
+            <span>
+              {% if lang == 'es' %}Sube por la puerta delantera, baja por la trasera{% else %}Board at front door, exit at rear door{% endif %}
+            </span>
+          </div>
+          <div class="d-flex align-items-center gap-2 small">
+            <i class="bi bi-clock-fill text-warning"></i>
+            <span>
+              {% if lang == 'es' %}Sale cada {{ route.frequency_minutes }} minutos{% else %}Departs every {{ route.frequency_minutes }} minutes{% endif %}
+            </span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Animate the journey progress bar
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      document.getElementById('progressFill').style.width = '60%';
+    }, 300);
+  });
+</script>
+{% endblock %}
