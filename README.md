@@ -25,9 +25,10 @@ docker-compose up -d --build
 docker-compose exec web python manage.py migrate
 
 #4. Reinicio y Acceso Final
-Una vez que la base de datos está lista (migrada), reinicie el servicio para asegurar que todas las configuraciones de Python se carguen correctamente y acceda a la interfaz.
+Una vez que la base de datos está lista (migrada), reinicie el servicio para asegurar que todas
+las configuraciones de Python se carguen correctamente y acceda a la interfaz.
 
-```bash
+
 # 5. Reiniciar el contenedor de la web para refrescar procesos
 docker-compose restart web
 
