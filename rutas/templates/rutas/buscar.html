@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Buscar Ruta - RutasEAFIT</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container mt-5">
+
+    <h1 class="text-center mb-2">🚌 RutasEAFIT</h1>
+    <p class="text-center text-muted mb-4">Encuentra tu ruta de transporte público desde y hacia la Universidad EAFIT</p>
+
+    <!-- Mensaje de ayuda para usuarios nuevos (Escenario 3 HU-07) -->
+    <div class="alert alert-info" role="alert">
+        💡 <strong>¿Cómo funciona?</strong> Escribe el nombre de tu destino en el campo de abajo y haz clic en <em>Buscar</em>. Te mostraremos las rutas disponibles paso a paso.
+    </div>
+
+    <div class="card shadow-sm p-4 mb-4">
+        <form method="get" action="">
+            <div class="mb-3">
+                <label for="destino" class="form-label fw-bold">¿A dónde quieres ir?</label>
+                <input
+                    type="text"
+                    name="destino"
+                    id="destino"
+                    class="form-control form-control-lg"
+                    placeholder="Ej: Hospital, Centro Comercial, Parque..."
+                    value="{{ consulta }}"
+                >
+                <div class="form-text">El punto de origen siempre es la Universidad EAFIT.</div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">🔍 Buscar ruta</button>
+        </form>
+    </div>
+
+    <!-- Resultados -->
+    {% if consulta %}
+        {% if rutas %}
+            <h5 class="mb-3">Rutas encontradas para <strong>{{ consulta }}</strong>:</h5>
+            <div class="list-group">
+                {% for ruta in rutas %}
+                <a href="/rutas/ruta/{{ ruta.id }}/" class="list-group-item list-group-item-action">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ ruta.nombre }}</h6>
+                            <small class="text-muted">{{ ruta.origen }} → {{ ruta.destino }}</small>
+                        </div>
+                        <span class="badge bg-primary rounded-pill">⏱ {{ ruta.tiempo_estimado_minutos }} min</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-warning">
+                ⚠️ No encontramos rutas para <strong>{{ consulta }}</strong>. Intenta con otro destino.
+            </div>
+        {% endif %}
+    {% endif %}
+
+</div>
+</body>
+</html>
