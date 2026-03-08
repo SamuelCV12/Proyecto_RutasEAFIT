@@ -6,7 +6,6 @@
 ---
 
 ## ¿Qué hace esta historia de usuario?
-
 La HU-07 se enfoca en la **experiencia del usuario primerizo**. Implementa tres escenarios clave:
 
 **Escenario 1 — Presentación clara de la ruta:**
@@ -31,7 +30,6 @@ En la página de búsqueda se muestra un mensaje de ayuda estático que explica 
 ---
 
 ## ¿Cómo correr el proyecto? (Paso a paso)
-
 ### Requisitos previos
 - Python 3.x instalado
 - Git instalado
