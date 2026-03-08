@@ -2,46 +2,254 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Detalle de Ruta - RutasEAFIT</title>
+    <title>{{ ruta.nombre }} - RutaMedellín</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0d0d1a;
+            min-height: 100vh;
+            color: white;
+            background-image: radial-gradient(ellipse at 20% 50%, rgba(67,97,238,0.15) 0%, transparent 60%),
+                              radial-gradient(ellipse at 80% 20%, rgba(255,107,53,0.1) 0%, transparent 50%);
+        }
+        nav {
+            padding: 18px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+        .logo-box {
+            background: #ff6b35;
+            border-radius: 10px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+        .main { max-width: 620px; margin: 0 auto; padding: 40px 20px 60px; }
+        .btn-volver {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 10px;
+            padding: 8px 16px;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            font-size: 0.85rem;
+            margin-bottom: 24px;
+            transition: background 0.2s;
+        }
+        .btn-volver:hover { background: rgba(255,255,255,0.12); color: white; }
+        .header-ruta {
+            background: linear-gradient(90deg, #e85d04, #ff6b35);
+            border-radius: 16px;
+            padding: 22px 24px;
+            margin-bottom: 20px;
+        }
+        .header-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; margin-bottom: 4px; }
+        .header-lugar { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; }
+        .flecha { font-size: 1.4rem; opacity: 0.8; }
+        .card-info {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.09);
+            border-radius: 16px;
+            padding: 22px;
+            margin-bottom: 16px;
+        }
+        .card-titulo {
+            font-family: 'Syne', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 16px;
+            font-size: 0.78rem;
+        }
+        .resumen-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 11px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            font-size: 0.9rem;
+        }
+        .resumen-row:last-child { border-bottom: none; }
+        .resumen-label { color: rgba(255,255,255,0.4); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .resumen-val { font-weight: 600; }
+        .tiempo-badge {
+            background: rgba(255,107,53,0.2);
+            border: 1px solid rgba(255,107,53,0.4);
+            color: #ff6b35;
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+        /* Timeline de pasos */
+        .timeline { position: relative; padding-left: 20px; }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 20px;
+            bottom: 20px;
+            width: 2px;
+            background: rgba(255,255,255,0.1);
+        }
+        .paso {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 14px 0;
+            position: relative;
+        }
+        .paso-num {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+        }
+        .paso-num.inicio { background: #ff6b35; }
+        .paso-num.medio { background: rgba(67,97,238,0.8); }
+        .paso-num.fin { background: #4361ee; }
+        .paso-contenido { padding-top: 4px; }
+        .paso-titulo { font-weight: 600; font-size: 0.92rem; margin-bottom: 3px; }
+        .paso-desc { font-size: 0.82rem; color: rgba(255,255,255,0.45); line-height: 1.5; }
+        .paso-desc strong { color: rgba(255,255,255,0.75); }
+        .tag-inicio {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #ff6b35;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+        .tag-fin {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #4361ee;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+    </style>
 </head>
-<body class="bg-light">
-<div class="container mt-5">
+<body>
 
-    <a href="/rutas/buscar/" class="btn btn-outline-secondary mb-4">← Volver a buscar</a>
+<nav>
+    <div class="logo">
+        <div class="logo-box">🚌</div>
+        RutaMedellín
+    </div>
+</nav>
 
-    <h2 class="mb-1">{{ ruta.nombre }}</h2>
-    <p class="text-muted">Información clara y paso a paso para que puedas viajar sin confusión.</p>
+<div class="main">
 
-    <!-- Escenario 1 y 2 HU-07: presentación lineal y sin conocimiento previo -->
-    <div class="card shadow-sm p-4">
+    <a href="/rutas/buscar/" class="btn-volver">← Volver a buscar</a>
 
-        <h5 class="mb-3">📍 Resumen del viaje</h5>
-        <ul class="list-group list-group-flush mb-4">
-            <li class="list-group-item"><strong>🏫 Origen:</strong> {{ ruta.origen }}</li>
-            <li class="list-group-item"><strong>📌 Destino:</strong> {{ ruta.destino }}</li>
-            <li class="list-group-item"><strong>⏱ Tiempo estimado:</strong> {{ ruta.tiempo_estimado_minutos }} minutos</li>
-        </ul>
+    <!-- Header naranja con origen/destino -->
+    <div class="header-ruta">
+        <div style="font-size:0.75rem; opacity:0.7; margin-bottom:14px;">Tu ruta seleccionada</div>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <div class="header-label">Desde</div>
+                <div class="header-lugar">📍 {{ ruta.origen }}</div>
+            </div>
+            <div class="flecha">→</div>
+            <div class="text-end">
+                <div class="header-label">Hasta</div>
+                <div class="header-lugar">📍 {{ ruta.destino }}</div>
+            </div>
+        </div>
+    </div>
 
-        <h5 class="mb-3">🗺️ Pasos para llegar</h5>
-        <ol class="list-group list-group-numbered">
-            <li class="list-group-item">
-                Sal de la <strong>Universidad EAFIT</strong> por la entrada principal sobre la calle 7.
-            </li>
-            <li class="list-group-item">
-                Dirígete a pie hasta la parada de bus más cercana. Busca el poste con el letrero de <strong>ruta {{ ruta.nombre }}</strong>.
-            </li>
-            <li class="list-group-item">
-                Aborda el bus y espera hasta llegar a tu destino: <strong>{{ ruta.destino }}</strong>.
-            </li>
-            <li class="list-group-item">
-                Baja en la parada indicada. Si tienes dudas, puedes preguntarle al conductor el nombre de la parada.
-            </li>
-            <li class="list-group-item">
-                ¡Llegaste! El recorrido completo toma aproximadamente <strong>{{ ruta.tiempo_estimado_minutos }} minutos</strong>.
-            </li>
-        </ol>
+    <!-- Resumen -->
+    <div class="card-info">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <div style="font-family:'Syne',sans-serif; font-weight:700; font-size:1.1rem;">{{ ruta.nombre }}</div>
+                <div style="font-size:0.8rem; color:rgba(255,255,255,0.4);">Servicio de transporte público</div>
+            </div>
+            <span class="tiempo-badge">⏱ {{ ruta.tiempo_estimado_minutos }} min</span>
+        </div>
+        <div class="resumen-row">
+            <span class="resumen-label">Origen</span>
+            <span class="resumen-val">{{ ruta.origen }}</span>
+        </div>
+        <div class="resumen-row">
+            <span class="resumen-label">Destino</span>
+            <span class="resumen-val">{{ ruta.destino }}</span>
+        </div>
+        <div class="resumen-row">
+            <span class="resumen-label">Tiempo estimado</span>
+            <span class="resumen-val">{{ ruta.tiempo_estimado_minutos }} minutos</span>
+        </div>
+    </div>
 
+    <!-- Pasos paso a paso -->
+    <div class="card-info">
+        <div class="card-titulo">📍 Paradas a lo largo de la ruta</div>
+        <div class="timeline">
+
+            <div class="paso">
+                <div class="paso-num inicio">1</div>
+                <div class="paso-contenido">
+                    <div class="tag-inicio">Punto de partida</div>
+                    <div class="paso-titulo">{{ ruta.origen }}</div>
+                    <div class="paso-desc">Sal por la entrada principal sobre la Calle 7. Busca la parada de bus sobre la avenida.</div>
+                </div>
+            </div>
+
+            <div class="paso">
+                <div class="paso-num medio">2</div>
+                <div class="paso-contenido">
+                    <div class="paso-titulo">Parada de bus</div>
+                    <div class="paso-desc">Ubica el poste con el letrero de <strong>{{ ruta.nombre }}</strong>. Espera el bus en la acera.</div>
+                </div>
+            </div>
+
+            <div class="paso">
+                <div class="paso-num medio">3</div>
+                <div class="paso-contenido">
+                    <div class="paso-titulo">Abordar el bus</div>
+                    <div class="paso-desc">Sube al bus en dirección a <strong>{{ ruta.destino }}</strong>. Si tienes dudas, pregúntale al conductor.</div>
+                </div>
+            </div>
+
+            <div class="paso">
+                <div class="paso-num fin">4</div>
+                <div class="paso-contenido">
+                    <div class="tag-fin">Destino</div>
+                    <div class="paso-titulo">{{ ruta.destino }}</div>
+                    <div class="paso-desc">Llegarás en aproximadamente <strong>{{ ruta.tiempo_estimado_minutos }} minutos</strong> desde la Universidad EAFIT.</div>
+                </div>
+            </div>
+
+        </div>
     </div>
 
 </div>
