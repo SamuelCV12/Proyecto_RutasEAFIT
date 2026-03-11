@@ -1,0 +1,115 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle del Viaje #{{ viaje.id }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f4f7f6; padding-top: 30px; }
+        .timeline { position: relative; list-style: none; padding: 20px 0; }
+        .timeline:before {
+            content: ""; position: absolute; top: 0; bottom: 0; left: 40px;
+            width: 2px; background: #e0e0e0;
+        }
+        .timeline-item { position: relative; margin-bottom: 30px; padding-left: 80px; }
+        .timeline-icon {
+            position: absolute; left: 25px; width: 32px; height: 32px;
+            background: #fff; border: 2px solid #667eea; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; z-index: 1;
+        }
+        .card-detalle { border-radius: 15px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .header-viaje { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px; padding: 20px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container mb-5">
+        <a href="{% url 'rutas:buscador_rutas' %}" class="btn btn-outline-secondary mb-4">
+            <i class="bi bi-arrow-left"></i> Volver al buscador
+        </a>
+
+        <div class="header-viaje shadow">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2>Resumen del Viaje</h2>
+                    <p class="mb-0">De EAFIT hacia tu destino seleccionado</p>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <h3 class="mb-0">{{ viaje.duracion_total_minutos }} min</h3>
+                    <span>Costo total: ${{ viaje.costo_total|floatformat:0 }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card card-detalle p-4">
+                    <h4 class="mb-4"><i class="bi bi-signpost-split"></i> Paso a paso</h4>
+                    
+                    <div class="timeline">
+                        {% for tramo in tramos %}
+                        <div class="timeline-item">
+                            <div class="timeline-icon">
+                                {% if tramo.tipo == 'bus' %}
+                                    <i class="bi bi-bus-front text-primary"></i>
+                                {% elif tramo.tipo == 'transbordo' %}
+                                    <i class="bi bi-arrow-left-right text-warning"></i>
+                                {% else %}
+                                    <i class="bi bi-person-walking text-success"></i>
+                                {% endif %}
+                            </div>
+                            <div class="card p-3 shadow-sm">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h5 class="mb-1">
+                                        {% if tramo.tipo == 'bus' %}
+                                            Bus {{ tramo.ruta.numero_ruta }}
+                                        {% else %}
+                                            {{ tramo.tipo|capfirst }}
+                                        {% endif %}
+                                    </h5>
+                                    <span class="badge bg-light text-dark border">{{ tramo.hora_salida|time:"H:i" }}</span>
+                                </div>
+                                <p class="text-muted mb-2">{{ tramo.instrucciones }}</p>
+                                <div class="d-flex justify-content-between">
+                                    <small><i class="bi bi-clock"></i> {{ tramo.duracion_minutos }} min</small>
+                                    {% if tramo.costo > 0 %}
+                                        <small class="fw-bold text-success">${{ tramo.costo|floatformat:0 }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 mt-4 mt-lg-0">
+                {% if advertencias %}
+                <div class="alert alert-warning card-detalle">
+                    <h5 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> ¡Atención!</h5>
+                    <hr>
+                    {% for adv in advertencias %}
+                        <p class="mb-1 small">• {{ adv.mensaje }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="card card-detalle p-4 mt-3 bg-white">
+                    <h5>Info del Viaje</h5>
+                    <ul class="list-unstyled mt-3">
+                        <li class="mb-2"><i class="bi bi-calendar-event"></i> Fecha: {{ viaje.fecha_consulta|date:"d M, Y" }}</li>
+                        <li class="mb-2"><i class="bi bi-repeat"></i> Transbordos: {{ viaje.numero_transbordos }}</li>
+                        <li class="mb-2"><i class="bi bi-shield-check"></i> Estado: 
+                            <span class="badge {% if viaje.estado == 'valido' %}bg-success{% else %}bg-warning{% endif %}">
+                                {{ viaje.estado }}
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

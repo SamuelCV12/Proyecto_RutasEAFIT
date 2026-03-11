@@ -1,17 +1,18 @@
-# Usamos una versión oficial y ligera de Python para ahorrar memoria
-FROM python:3.10-slim
+FROM python:3.12-slim
 
-# Evita que Python escriba archivos .pyc en el disco
-ENV PYTHONDONTWRITEBYTECODE=1
-# Asegura que la salida de Python se envíe directamente a la terminal (útil para logs)
-ENV PYTHONUNBUFFERED=1
+# Instalar dependencias del sistema para PostgreSQL
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
-# Establecemos el directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# Instalamos las dependencias
-COPY requirements.txt /app/
-RUN pip install --upgrade pip && pip install -r requirements.txt
+# Copiar requerimientos e instalar
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiamos el resto del código del proyecto al contenedor
-COPY . /app/
+# Copiar el resto del proyecto
+COPY . .
+
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

@@ -1,0 +1,179 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador de Rutas - RutasEAFIT</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px 0; }
+        .main-card { border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .preference-card { cursor: pointer; transition: all 0.3s; border: 2px solid #e0e0e0; border-radius: 10px; }
+        .preference-card.active { border-color: #667eea; background-color: #f8f9ff; box-shadow: 0 4px 10px rgba(102,126,234,0.2); }
+        .route-result-card { cursor: pointer; transition: all 0.3s; border-left: 5px solid #667eea; margin-bottom: 15px; border-radius: 10px; }
+        .route-result-card:hover { transform: translateX(5px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .loading-spinner { display: none; }
+        .loading-spinner.show { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="text-center text-white mb-4">
+            <h1 class="display-4"><i class="bi bi-bus-front"></i> Buscador de Rutas</h1>
+            <p class="lead">EAFIT - Medellín</p>
+        </div>
+
+        <div class="card main-card mb-4">
+            <div class="card-body p-4">
+                <form id="formBusqueda">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Origen</label>
+                        <input type="text" class="form-control" id="origen" value="{{ origen_default }}" readonly>
+                        <input type="hidden" id="origenLat" value="{{ origen_lat }}">
+                        <input type="hidden" id="origenLng" value="{{ origen_lng }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Destino</label>
+                        <select class="form-select" id="destino" required>
+                            <option value="">Selecciona un destino...</option>
+                            {% for dest in destinos_populares %}
+                            <option value="{{ dest.nombre }}" data-lat="{{ dest.lat }}" data-lng="{{ dest.lng }}">{{ dest.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Preferencia</label>
+                        <div class="row g-2">
+                            <div class="col-4"><div class="card preference-card active p-2 text-center" data-pref="mas_rapido">Rápido</div></div>
+                            <div class="col-4"><div class="card preference-card p-2 text-center" data-pref="mas_barato">Barato</div></div>
+                            <div class="col-4"><div class="card preference-card p-2 text-center" data-pref="menos_transbordos">Directo</div></div>
+                        </div>
+                        <input type="hidden" id="preferencia" value="mas_rapido">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-100">Buscar Rutas</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="loadingSpinner" class="text-center loading-spinner text-white">
+            <div class="spinner-border" role="status"></div>
+            <p class="mt-2">Calculando y guardando rutas...</p>
+        </div>
+
+        <div id="resultados" style="display: none;">
+            <h3 class="text-white mb-3">Rutas Disponibles</h3>
+            <div id="listaRutas"></div>
+        </div>
+    </div>
+
+    <script>
+        // Manejo de clicks en preferencias
+        document.querySelectorAll('.preference-card').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.preference-card').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                document.getElementById('preferencia').value = this.dataset.pref;
+            });
+        });
+
+        document.getElementById('formBusqueda').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const loading = document.getElementById('loadingSpinner');
+            const resDiv = document.getElementById('resultados');
+            const lista = document.getElementById('listaRutas');
+            
+            loading.classList.add('show');
+            resDiv.style.display = 'none';
+
+            const sel = document.getElementById('destino');
+            const opt = sel.options[sel.selectedIndex];
+
+            const datos = {
+                origen_lat: parseFloat(document.getElementById('origenLat').value),
+                origen_lng: parseFloat(document.getElementById('origenLng').value),
+                destino_lat: parseFloat(opt.dataset.lat),
+                destino_lng: parseFloat(opt.dataset.lng),
+                preferencia: document.getElementById('preferencia').value
+            };
+
+            try {
+                const response = await fetch('{% url "rutas:calcular_rutas" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify(datos)
+                });
+                
+                const result = await response.json();
+                loading.classList.remove('show');
+                
+                if (result.success) {
+                    lista.innerHTML = '';
+                result.rutas.forEach((r, i) => {
+    // Verificamos si viaje_id existe para evitar el error al hacer click
+    const idParaClick = r.viaje_id ? r.viaje_id : 'null';
+    
+    // 1. Preparamos el HTML de las sugerencias alternativas si las hay
+    let htmlSugerencias = '';
+    if (r.sugerencias_recuperacion && r.sugerencias_recuperacion.length > 0) {
+        htmlSugerencias = `
+            <div class="alert alert-warning mt-3 mb-0 p-2" style="font-size: 0.85rem;">
+                <strong><i class="bi bi-exclamation-triangle-fill"></i> Conexión Incompatible o Retraso</strong>
+                <p class="mb-1">Se sugieren estas alternativas viables:</p>
+                <ul class="ps-3 mb-0">
+                    ${r.sugerencias_recuperacion.map(s => `<li>${s.mensaje} (${s.tiempo_estimado} min)</li>`).join('')}
+                </ul>
+            </div>`;
+    }
+
+    // 2. Construimos la tarjeta completa
+    lista.innerHTML += `
+        <div class="card route-result-card" onclick="verDetalle(${idParaClick})">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="badge bg-primary">Opción ${i+1}</span>
+                    <h5 class="mb-0 text-primary">${r.duracion_total}</h5>
+                </div>
+                <p class="mt-2 mb-1">
+                    <i class="bi bi-cash"></i> ${r.costo_total} | 
+                    <i class="bi bi-arrow-left-right"></i> Transbordos: ${r.numero_transbordos}
+                </p>
+                
+                ${htmlSugerencias} <div class="mt-2">
+                    <small class="text-muted"><i class="bi bi-info-circle"></i> Haz clic para ver el recorrido completo</small>
+                </div>
+            </div>
+        </div>`;
+});
+                    resDiv.style.display = 'block';
+                    // Scroll suave hacia los resultados
+                    resDiv.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert("No se encontraron rutas: " + (result.error || "Error desconocido"));
+                }
+            } catch (err) {
+                loading.classList.remove('show');
+                console.error("Error en fetch:", err);
+                alert("Error crítico al conectar con el servidor.");
+            }
+        });
+
+        function verDetalle(viajeId) {
+            console.log("Intentando acceder al viaje ID:", viajeId);
+            if (viajeId && viajeId !== null) {
+                window.location.href = `/rutas/viaje/${viajeId}/`;
+            } else {
+                alert("Esta ruta se calculó pero no pudo ser registrada en la base de datos. Intenta con otra opción.");
+            }
+        }
+    </script>
+</body>
+</html>
