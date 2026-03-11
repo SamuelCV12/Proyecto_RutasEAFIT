@@ -52,7 +52,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'rutasEAFIT.urls'
+ROOT_URLCONF = 'rutaseafit.urls'
 
 TEMPLATES = [
     {
@@ -69,7 +69,7 @@ TEMPLATES = [
         },
     },
 ]
-WSGI_APPLICATION = 'rutasEAFIT.wsgi.application'
+WSGI_APPLICATION = 'rutaseafit.wsgi.application'
 
 
 # Database
