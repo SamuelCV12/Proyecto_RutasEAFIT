@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - RutaMedellín</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Animaciones para reemplazar framer-motion */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
+        .delay-300 { animation-delay: 0.3s; opacity: 0; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+        <div class="absolute inset-0 z-0">
+            <img src="https://images.unsplash.com/photo-1715503234312-18e818295fa2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxNZWRlbGxpbiUyMENvbG9tYmlhJTIwYnVzJTIwdHJhbnNwb3J0YXRpb258ZW58MXx8fHwxNzcwODUxNDkwfDA&ixlib=rb-4.1.0&q=80&w=1080" 
+                 alt="Transporte en Medellín" 
+                 class="w-full h-full object-cover" />
+            <div class="absolute inset-0 bg-gradient-to-br from-blue-900/70 via-green-900/60 to-blue-900/70 backdrop-blur-sm"></div>
+        </div>
+
+        <div class="w-full max-w-md relative z-10 animate-fade-in-up">
+            <div class="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-8 md:p-10">
+                
+                <div class="text-center mb-8">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-green-600 rounded-full mb-4 shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 text-white"><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/></svg>
+                    </div>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">RutaMedellín</h1>
+                    <p class="text-gray-600">Tu guía de transporte universitario</p>
+                </div>
+
+                <form method="GET" action="{% url 'rutas:buscar_rutas' %}" class="space-y-5">
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                            Correo electrónico
+                        </label>
+                        <input id="email" type="email" name="email" placeholder="tucorreo@gmail.com" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-800 bg-white/50 backdrop-blur-sm" />
+                    </div>
+
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                            Contraseña
+                        </label>
+                        <input id="password" type="password" name="password" placeholder="••••••••" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-800 bg-white/50 backdrop-blur-sm" />
+                    </div>
+
+                    <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-green-600 text-white py-3 rounded-lg font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2 group mt-2">
+                        Iniciar sesión
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 group-hover:translate-x-1 transition-transform"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center">
+                    <button class="text-sm text-blue-600 hover:underline">¿Olvidaste tu contraseña?</button>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-gray-200 text-center">
+                    <p class="text-sm text-gray-600">
+                        ¿No tienes cuenta? 
+                        <a href="{% url 'rutas:registro' %}" class="text-blue-600 font-medium hover:underline">Regístrate aquí</a>
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-6 bg-white/90 backdrop-blur-md rounded-xl p-4 text-center shadow-lg animate-fade-in-up delay-300">
+                <p class="text-sm text-gray-700 font-medium">
+                    Viaja sin complicaciones: Encuentra las rutas más fáciles desde EAFIT a Medellín y de vuelta en un solo clic.
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
