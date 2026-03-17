@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Navigation - RutaMedellín</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+        #map { height: 100vh; width: 100vw; z-index: 1; }
+        
+        .glass-sidebar {
+            position: absolute; top: 90px; right: 20px; width: 450px; height: calc(100vh - 110px);
+            background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px);
+            border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3); z-index: 10;
+            display: flex; flex-direction: column; overflow: hidden; border: 1px solid rgba(255,255,255,0.8);
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .custom-marker {
+            background-color: #2563eb; color: white; border-radius: 50%;
+            width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.3s;
+        }
+        .custom-marker.active { background-color: #ea580c; transform: scale(1.2); z-index: 1000 !important; }
+        .custom-marker.transbordo { background-color: #f59e0b; }
+        .custom-marker.destino { background-color: #0d9488; }
+    </style>
+</head>
+<body>
+
+    <div class="absolute top-0 left-0 w-full h-20 bg-blue-600 z-20 flex items-center justify-between px-6 shadow-lg">
+        <div class="flex items-center gap-4 text-white">
+            <button onclick="window.history.back()" class="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <div>
+                <h1 class="text-xl font-bold flex items-center gap-2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                    Route to {{ destino_nombre }}
+                </h1>
+                <p class="text-sm text-blue-200">From {{ origen_nombre }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <div class="glass-sidebar">
+        <div class="flex-grow overflow-y-auto no-scrollbar">
+            
+            <div class="border-b-4 border-blue-600 bg-gradient-to-br from-blue-50 to-white p-6">
+                <div class="flex items-start justify-between mb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-1">Route Information</h2>
+                        <p class="text-sm text-gray-600">Route from {{ origen_nombre }} to {{ destino_nombre }}</p>
+                    </div>
+                </div>
+
+                <div class="mb-6 p-4 bg-white rounded-xl shadow-sm border border-gray-200">
+                    <div class="flex items-center gap-2 mb-3">
+                        <svg class="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/></svg>
+                        <h3 class="font-bold text-gray-900">Buses to Take</h3>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        {% for bus in buses %}
+                        <div class="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold text-lg shadow-md">
+                            {{ bus|slice:":5" }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <p class="text-sm text-gray-600 mt-3">These buses will take you from {{ origen_nombre }}.</p>
+                </div>
+
+                <div class="mb-6 p-4 bg-white rounded-xl shadow-sm border border-gray-200">
+                    <div class="flex items-center gap-2 mb-3">
+                        <svg class="w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        <h3 class="font-bold text-gray-900">Trip Costs</h3>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-gray-900">Total Fare:</span>
+                            <span class="font-bold text-blue-600 text-lg">${{ precio_total }} COP</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6 p-4 bg-white rounded-xl shadow-sm border border-gray-200">
+                    <div class="flex items-center gap-2 mb-3">
+                        <svg class="w-5 h-5 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                        <h3 class="font-bold text-gray-900">Route Details</h3>
+                    </div>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-start gap-3">
+                            <svg class="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <div>
+                                <p class="font-medium text-gray-900">Estimated duration</p>
+                                <p class="text-gray-600">{{ tiempo_total }} min</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <svg class="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                            <div>
+                                <p class="font-medium text-gray-900">Total stops</p>
+                                <p class="text-gray-600">{{ total_paradas }} stops including origin and destination</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6 p-4 bg-white rounded-xl shadow-sm border border-gray-200">
+                    <div class="flex items-center gap-2 mb-3">
+                        <svg class="w-5 h-5 text-orange-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                        <h3 class="font-bold text-gray-900">Main Streets</h3>
+                    </div>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        {% for calle in calles %}
+                        <li class="flex items-start gap-2">
+                            <span class="text-orange-500 font-bold flex-shrink-0">{{ forloop.counter }}.</span>
+                            <span>{{ calle }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="p-6 pb-2 bg-white">
+                <h3 class="text-xl font-bold text-gray-800">Step-by-Step Navigation</h3>
+            </div>
+
+            <div class="p-6 pt-2" id="steps-container"></div>
+        </div>
+
+        <div class="px-6 py-4 border-t border-gray-200 bg-white flex gap-3 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] z-20">
+            <button id="btn-prev" class="px-4 py-3 bg-gray-100 text-gray-500 rounded-xl font-bold hover:bg-gray-200 disabled:opacity-50 transition-colors w-1/3 text-center">
+                Prev
+            </button>
+            <button id="btn-next" class="px-4 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-md transition-colors w-2/3 text-center flex justify-center items-center gap-2">
+                Next Step
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const paradas_data = JSON.parse('{{ paradas_json|safe|escapejs }}');
+        let currentStep = 0;
+        let markers = [];
+
+        const map = L.map('map', { zoomControl: false }).setView([paradas_data[0].lat, paradas_data[0].lng], 15);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        L.control.zoom({ position: 'bottomleft' }).addTo(map);
+
+        const latlngs = paradas_data.map(p => [p.lat, p.lng]);
+        const polyline = L.polyline(latlngs, {
+            color: '#2563eb', weight: 6, opacity: 0.8, dashArray: '10, 10', lineJoin: 'round'
+        }).addTo(map);
+
+        map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+
+        const stepsContainer = document.getElementById('steps-container');
+
+        paradas_data.forEach((parada, index) => {
+            let cssClass = 'custom-marker';
+            if(parada.tipo === 'transbordo') cssClass += ' transbordo';
+            if(parada.tipo === 'destino') cssClass += ' destino';
+
+            const icon = L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div class="${cssClass}" id="marker-${index}">${index + 1}</div>`,
+                iconSize: [30, 30], iconAnchor: [15, 15]
+            });
+
+            const marker = L.marker([parada.lat, parada.lng], { icon }).addTo(map);
+            markers.push(marker);
+
+            marker.bindPopup(`
+                <div class="p-1">
+                    <h3 class="text-sm font-bold text-gray-800">${parada.nombre}</h3>
+                </div>
+            `, { closeButton: false, offset: [0, -10] });
+
+            // CONSTRUCCIÓN DEL HTML PARA LA BARRA LATERAL CON DETALLES "RICOS" PARA TODAS LAS PARADAS
+            const stepHTML = `
+                <div class="flex gap-4 mb-4 relative step-card-wrapper" id="step-card-${index}">
+                    ${index !== paradas_data.length - 1 ? '<div class="absolute top-10 left-4 bottom-[-16px] w-0.5 bg-gray-200"></div>' : ''}
+                    
+                    <div class="flex-shrink-0 z-10 w-9 h-9 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-bold text-sm shadow-sm transition-colors duration-300 icon-bg">
+                        ${index + 1}
+                    </div>
+                    
+                    <div class="flex-grow border-2 border-transparent bg-white rounded-2xl p-4 transition-all duration-300 card-bg cursor-pointer shadow-sm" onclick="goToStep(${index})">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-bold text-blue-900 text-lg leading-tight mb-1 title-text">${parada.nombre}</h3>
+                                ${parada.tipo === 'origen' ? '<p class="text-xs font-bold text-blue-600 uppercase flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg> Starting Point</p>' : ''}
+                                ${parada.tipo === 'transbordo' ? '<p class="text-xs font-bold text-orange-500 uppercase flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg> Transfer Point</p>' : ''}
+                                ${parada.tipo === 'destino' ? '<p class="text-xs font-bold text-teal-600 uppercase flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> Destination</p>' : ''}
+                            </div>
+                        </div>
+
+                        <div class="mt-4 space-y-3 rich-details hidden transition-all">
+                            <div class="border border-gray-200 rounded-xl p-3 flex gap-3 items-start bg-white shadow-sm">
+                                <svg class="text-blue-600 mt-0.5 flex-shrink-0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 11 19-9-9 19-2-8-8-2z"/></svg>
+                                <p class="text-sm text-gray-800 font-medium">${parada.desc}</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            `;
+            stepsContainer.insertAdjacentHTML('beforeend', stepHTML);
+        });
+
+        // NAVEGACIÓN
+        function goToStep(index) {
+            if(index < 0 || index >= paradas_data.length) return;
+            currentStep = index;
+
+            document.getElementById('btn-prev').disabled = currentStep === 0;
+            const btnNext = document.getElementById('btn-next');
+            
+            // Si llegamos al final de la ruta, el botón cambia a "Finish ✓"
+            if (currentStep === paradas_data.length - 1) {
+                btnNext.innerHTML = 'Finish <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>';
+                btnNext.classList.replace('bg-blue-600', 'bg-teal-600');
+                btnNext.classList.replace('hover:bg-blue-700', 'hover:bg-teal-700');
+            } else {
+                btnNext.innerHTML = 'Next Step <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
+                btnNext.classList.replace('bg-teal-600', 'bg-blue-600');
+                btnNext.classList.replace('hover:bg-teal-700', 'hover:bg-blue-700');
+            }
+
+            const targetLatLgn = [paradas_data[currentStep].lat, paradas_data[currentStep].lng];
+            map.flyTo(targetLatLgn, 16, { duration: 1.5, animate: true });
+            
+            markers.forEach(m => m.closePopup());
+            setTimeout(() => { markers[currentStep].openPopup(); }, 500);
+
+            document.querySelectorAll('.custom-marker').forEach(el => el.classList.remove('active', 'bg-orange-500'));
+            const activeMarker = document.getElementById(`marker-${currentStep}`);
+            if(activeMarker) activeMarker.classList.add('active', 'bg-orange-500');
+
+            for(let i=0; i<paradas_data.length; i++) {
+                const cardWrapper = document.getElementById(`step-card-${i}`);
+                const iconBg = cardWrapper.querySelector('.icon-bg');
+                const cardBg = cardWrapper.querySelector('.card-bg');
+                const richDetails = cardWrapper.querySelector('.rich-details');
+                const titleText = cardWrapper.querySelector('.title-text');
+
+                if (i === currentStep) {
+                    iconBg.className = `flex-shrink-0 z-10 w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-md transition-colors duration-300 icon-bg`;
+                    cardBg.className = `flex-grow border-2 border-blue-400 bg-blue-50/30 rounded-2xl p-4 transition-all duration-300 card-bg cursor-pointer shadow-md`;
+                    titleText.classList.replace('text-gray-700', 'text-blue-900');
+                    if(richDetails) richDetails.classList.remove('hidden');
+                    cardWrapper.scrollIntoView({ behavior: "smooth", block: "center" });
+                } else {
+                    iconBg.className = `flex-shrink-0 z-10 w-9 h-9 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center font-bold text-sm transition-colors duration-300 icon-bg`;
+                    cardBg.className = `flex-grow border-2 border-transparent bg-white rounded-2xl p-4 transition-all duration-300 card-bg cursor-pointer border-gray-100 hover:border-gray-300`;
+                    titleText.classList.replace('text-blue-900', 'text-gray-700');
+                    if(richDetails) richDetails.classList.add('hidden');
+                }
+            }
+        }
+
+        // LÓGICA CORREGIDA DEL BOTÓN NEXT / FINISH
+        document.getElementById('btn-next').addEventListener('click', () => {
+            if (currentStep < paradas_data.length - 1) {
+                // Si NO estamos en el último paso, avanza al siguiente
+                goToStep(currentStep + 1);
+            } else {
+                // Si ESTAMOS en el último paso (Finish), redirige a la página principal (inicio.html)
+                window.location.href = "{% url 'rutas:buscar_rutas' %}";
+            }
+        });
+
+        // Botón Previous
+        document.getElementById('btn-prev').addEventListener('click', () => {
+            if (currentStep > 0) goToStep(currentStep - 1);
+        });
+
+        // Autoiniciar el mapa
+        setTimeout(() => { goToStep(0); }, 1000);
+
+    </script>
+</body>
+</html>

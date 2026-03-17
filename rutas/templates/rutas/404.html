@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruta no encontrada - RutasEAFIT</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Heredamos el diseño base de inicio.html */
+        body { color: #333; min-height: 100vh; margin: 0; font-family: system-ui, -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; }
+        
+        .bg-fixed-layer { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: -1; background-image: url('https://images.unsplash.com/photo-1697082390649-9c3a253ef8c2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxNZWRlbGxpbiUyMG1ldHJvJTIwY2FibGUlMjBjYXJ8ZW58MXx8fHwxNzcwODUzODMxfDA&ixlib=rb-4.1.0&q=80&w=1080'); background-size: cover; background-position: center; }
+        .gradient-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom right, rgba(30, 58, 138, 0.85), rgba(55, 48, 163, 0.80), rgba(88, 28, 135, 0.85)); }
+        
+        /* Estilo Glassmorphism */
+        .glass-card { background-color: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 2rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; max-width: 500px; width: 90%; }
+        
+        .icon-error { background: linear-gradient(to bottom right, #ef4444, #b91c1c); border-radius: 1rem; padding: 1.5rem; display: inline-flex; margin-bottom: 2rem; }
+    </style>
+</head>
+<body>
+
+    <div class="bg-fixed-layer">
+        <div class="gradient-overlay"></div>
+    </div>
+
+    <main class="glass-card p-5 animate-fade-in">
+        <div class="icon-error shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        
+        <h1 class="display-4 fw-bold text-dark mb-3">404</h1>
+        <h3 class="fw-bold text-secondary mb-4">¡Ruta perdida!</h3>
+        <p class="text-muted mb-5 fs-5">
+            Parece que el bus tomó un desvío. La parada que buscas no existe o ha sido movida.
+        </p>
+        
+        <a href="{% url 'rutas:buscar_rutas' %}" class="btn btn-lg w-100 py-3 shadow-sm fw-bold" style="background-color: #f3f4f6; color: #4b5563; border-radius: 1rem;">
+            🔙 Regresar al Buscador
+        </a>
+    </main>
+
+</body>
+</html>

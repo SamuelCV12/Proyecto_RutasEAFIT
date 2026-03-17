@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regístrate - RutaMedellín</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+        <div class="absolute inset-0 z-0">
+            <img src="https://images.unsplash.com/photo-1715503234312-18e818295fa2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxNZWRlbGxpbiUyMENvbG9tYmlhJTIwYnVzJTIwdHJhbnNwb3J0YXRpb258ZW58MXx8fHwxNzcwODUxNDkwfDA&ixlib=rb-4.1.0&q=80&w=1080" 
+                 alt="Transporte en Medellín" 
+                 class="w-full h-full object-cover" />
+            <div class="absolute inset-0 bg-gradient-to-br from-blue-900/70 via-green-900/60 to-blue-900/70 backdrop-blur-sm"></div>
+        </div>
+
+        <div class="w-full max-w-md relative z-10 animate-fade-in-up">
+            <div class="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-8 md:p-10">
+                
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">Crea tu cuenta</h1>
+                    <p class="text-gray-600">Únete a la comunidad de RutaMedellín</p>
+                </div>
+
+                <form method="GET" action="{% url 'rutas:buscar_rutas' %}" class="space-y-4">
+                    <div>
+                        <label for="nombre" class="block text-sm font-medium text-gray-700 mb-1">Nombre completo</label>
+                        <input id="nombre" type="text" name="nombre" placeholder="Ej. Juan Pérez" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all text-gray-800 bg-white/50 backdrop-blur-sm" />
+                    </div>
+
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Correo electrónico</label>
+                        <input id="email" type="email" name="email" placeholder="tucorreo@gmail.com" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all text-gray-800 bg-white/50 backdrop-blur-sm" />
+                    </div>
+
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                        <input id="password" type="password" name="password" placeholder="••••••••" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all text-gray-800 bg-white/50 backdrop-blur-sm" />
+                    </div>
+
+                    <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-green-600 text-white py-3 rounded-lg font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2 group mt-4">
+                        Comenzar a viajar
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 group-hover:translate-x-1 transition-transform"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                    </button>
+                </form>
+
+                <div class="mt-6 pt-6 border-t border-gray-200 text-center">
+                    <p class="text-sm text-gray-600">
+                        ¿Ya tienes una cuenta? 
+                        <a href="{% url 'rutas:login' %}" class="text-green-600 font-medium hover:underline">Inicia sesión aquí</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
