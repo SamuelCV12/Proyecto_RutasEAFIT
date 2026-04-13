@@ -2,6 +2,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from .models import Lugar, Ruta
 from datetime import datetime, timedelta
 import json
+import google.generativeai as genai
+from django.conf import settings
 
 # --- VISTAS DE AUTENTICACIÓN ---
 # (Nota: Estas se conectarán a la lógica real en el Paso 1 de Autenticación)
@@ -213,6 +215,45 @@ def detalle_ruta(request, ruta_id):
                 'precio': alt.precio, 'tiempo': alt.tiempo_estimado_min
             })
 
+     # Logica y promt para la IA
+
+    consejo_ia = "No se pudo generar el consejo en este momento."
+    
+    if hasattr(settings, 'GEMINI_API_KEY') and settings.GEMINI_API_KEY:
+        try:
+            # Configuramos el cliente con tu llave
+            genai.configure(api_key=settings.GEMINI_API_KEY)
+
+          
+            
+            # Usamos el modelo Flash (ideal para respuestas rápidas de texto)
+            model = genai.GenerativeModel('gemini-flash-latest')
+            
+            prompt = f"""
+            Eres un asistente virtual de movilidad experto en Medellín. 
+            Un usuario va a viajar desde {origen_final.nombre} hasta {destino_final.nombre}. 
+            Su hora de salida es a las {hora_salida}.
+            El viaje toma aproximadamente {tiempo_total} minutos.
+            
+            Redacta un consejo completo y detallado (un párrafo de unas 3 o 4 oraciones) sobre este viaje a esta hora específica. 
+            Debes incluir obligatoriamente esta información estructurada de forma natural:
+            1. Cómo suele estar el tráfico o el flujo de personas en el transporte a esa hora exacta.
+            2. Un tip de comodidad o clima (ej. prepararse para el calor, llevar paraguas, ir cómodo).
+            3. Una recomendación de seguridad y entorno (ej. cuidar objetos personales, puntos de referencia seguros).
+            
+            Usa un tono cálido, claro, respetuoso y universal. Debe ser perfecto para un estudiante local o un extranjero que apenas conoce la ciudad. Evita la jerga local.
+            """
+
+            # Hacemos la petición a Gemini
+            response = model.generate_content(prompt)
+            
+            # Extraemos el texto
+            consejo_ia = response.text.strip()
+            
+        except Exception as e:
+            print(f"Error con Gemini en detalle_ruta: {e}")
+            consejo_ia = "Tip: Mantén siempre tus pertenencias a la vista y disfruta el viaje."
+
     context = {
         'ruta1_id': ruta1.id,
         'tramo2_id': tramo2_id,
@@ -226,6 +267,7 @@ def detalle_ruta(request, ruta_id):
         'hora_llegada': hora_llegada,
         'paradas': paradas_con_tiempo,
         'alternativas': alternativas_procesadas,
+        'consejo_ia': consejo_ia,
     }
     
     return render(request, 'rutas/detalles.html', context)
@@ -261,6 +303,53 @@ def mapa_ruta(request, ruta_id):
     coord_origen = [origen_final.latitud, origen_final.longitud]
     coord_destino = [destino_final.latitud, destino_final.longitud]
 
+    # ==========================================
+    # --- LÓGICA DE IA (NIVEL 2: MAPA INTERACTIVO) ---
+    # ==========================================
+    # 1. Recopilamos todas las paradas únicas de esta ruta
+    todas_las_paradas = [origen_final.nombre, destino_final.nombre]
+    todas_las_paradas.extend(ruta1.get_paradas_list())
+    if es_transbordo:
+        todas_las_paradas.append(ruta1.destino.nombre)
+        todas_las_paradas.extend(ruta2.get_paradas_list())
+        
+    # Filtramos vacíos y duplicados para no hacer trabajar a la IA de más
+    # Limitamos a las primeras 8 paradas para no saturar la cuota gratuita
+    paradas_unicas = list(set([p.strip() for p in todas_las_paradas if p.strip()]))[:8]
+    descripciones_ia = {}
+
+    if hasattr(settings, 'GEMINI_API_KEY') and settings.GEMINI_API_KEY:
+        try:
+            genai.configure(api_key=settings.GEMINI_API_KEY)
+            model = genai.GenerativeModel('gemini-flash-latest')
+            
+            # Le pedimos a la IA que nos devuelva un JSON estructurado
+            prompt = f"""
+            Eres un guía urbano experto en Medellín para visitantes extranjeros. 
+            Tengo esta lista de ubicaciones: {', '.join(paradas_unicas)}.
+            
+            Para CADA ubicación, escribe UNA frase corta (maximo 20 palabras) que sirva como referencia visual absoluta. 
+            Sigue estas reglas:
+            1. Usa nombres de cadenas comerciales conocidas (ej: Éxito, Bancolombia, D1, Oxxo, Starbucks) o hitos arquitectónicos (ej: Edificio de Ingeniería, Portería Principal).
+            2. Indica la utilidad del lugar de forma clara: "Punto para retirar dinero", "Tienda de víveres", "Referencia visual grande".
+            3. Si es una calle, menciona qué cruce importante o estación del Metro está cerca.
+            4. Tono: Informativo, neutro y servicial. Cero jerga.
+            
+            IMPORTANTE: Devuelve ÚNICAMENTE un objeto JSON. Claves: nombres exactos de la lista. Valores: tus descripciones.
+            """
+           
+            
+            response = model.generate_content(prompt)
+            
+            # Limpiamos posibles formatos extraños que a veces devuelve la API
+            respuesta_texto = response.text.replace('```json', '').replace('```', '').strip()
+            descripciones_ia = json.loads(respuesta_texto)
+            
+        except Exception as e:
+            print(f"Error con Gemini en mapa_ruta (Generación de JSON): {e}")
+            descripciones_ia = {} # Si falla, usamos el diccionario vacío para que el mapa no colapse
+    # ==========================================
+
     paradas_mapa = []
     calles_list = [] 
     
@@ -273,26 +362,31 @@ def mapa_ruta(request, ruta_id):
         
         nodos = []
         if not is_tramo2:
+            # Reemplazamos el texto estático por el consejo de la IA
+            desc = descripciones_ia.get(origen_final.nombre, "Punto de partida de tu ruta.")
             nodos.append({
                 "nombre": origen_final.nombre, "lat": start_coord[0], "lng": start_coord[1], 
-                "tipo": "origen", "desc": f"Wait for bus {ruta1.nombre} heading to your destination."
+                "tipo": "origen", "desc": f"🤖 {desc}"
             })
             
         for i, nombre in enumerate(p_nombres):
+            desc = descripciones_ia.get(nombre, "El bus continúa por su ruta habitual.")
             nodos.append({
                 "nombre": nombre, "lat": start_coord[0] + lat_step * (i+1), "lng": start_coord[1] + lng_step * (i+1), 
-                "tipo": "intermedia", "desc": "The bus continues along its regular route."
+                "tipo": "intermedia", "desc": f"💡 {desc}"
             })
             
         if not es_transbordo or is_tramo2:
+            desc = descripciones_ia.get(destino_final.nombre, "Has llegado a tu destino.")
             nodos.append({
                 "nombre": destino_final.nombre, "lat": end_coord[0], "lng": end_coord[1], 
-                "tipo": "destino", "desc": "You have arrived at your destination."
+                "tipo": "destino", "desc": f"🏁 {desc}"
             })
         else:
+            desc = descripciones_ia.get(ruta1.destino.nombre, f"Lugar ideal para conectar con el bus {ruta2.nombre}.")
             nodos.append({
                 "nombre": ruta1.destino.nombre, "lat": ruta1.destino.latitud, "lng": ruta1.destino.longitud, 
-                "tipo": "transbordo", "desc": f"Get off and transfer to bus {ruta2.nombre}."
+                "tipo": "transbordo", "desc": f"🔄 {desc}"
             })
             
         return nodos
