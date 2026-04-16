@@ -49,17 +49,30 @@ git clone [https://github.com/SamuelCV12/Proyecto_RutasEAFIT.git](https://github
 cd Proyecto_RutasEAFIT
 ```
 
-**2. Build and start the containers:** This command will fetch the required images, build the Python environment (installing `requirements.txt`), and start the web and database services in detached mode (`-d` parameter):
+**2. Configure Environment Variables:**
+Before starting the containers, you must set up your local environment variables (such as the Maps API Key). Copy the provided example file:
+```bash
+cp .env.example .env
+```
+
+Make sure to open the new .env file and insert your specific MAPS_API_KEY before proceeding.
+**3. Build and start the containers: This command will fetch the required images, build the Python environment (installing requirements.txt), and start the web and database services in detached mode (-d parameter):**
 ```bash
 docker-compose up -d --build
 ```
 
-**3. Apply database migrations:** Set up the PostgreSQL database schema to match the Django models:
+**4. Apply database migrations: Set up the PostgreSQL database schema to match the Django models:**
 ```bash
 docker-compose exec web python manage.py migrate
 ```
 
-**4. Create a superuser (Optional, for admin panel access):**
+**5. Load Initial Data (Seeding):**
+Populate the database with the verified pre-configured routes and locations (Parque San Antonio, EAFIT, Laureles, etc.):
+```bash
+docker-compose exec web python manage.py loaddata data_inicial.json
+```
+
+**6. Create a superuser (Optional, for admin panel access):**
 ```bash
 docker-compose exec web python manage.py createsuperuser
 ```
