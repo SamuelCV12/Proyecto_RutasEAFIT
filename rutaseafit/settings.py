@@ -132,3 +132,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Uso de la IA en el proyecto
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+
+# Autenticación: redirigir al login cuando no hay sesión
+LOGIN_URL = '/'

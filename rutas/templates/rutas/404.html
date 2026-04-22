@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -16,6 +17,34 @@
         .glass-card { background-color: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 2rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; max-width: 500px; width: 90%; }
         
         .icon-error { background: linear-gradient(to bottom right, #ef4444, #b91c1c); border-radius: 1rem; padding: 1.5rem; display: inline-flex; margin-bottom: 2rem; }
+
+        /* ===== LANGUAGE SWITCHER ===== */
+        .lang-switcher-container {
+            position: fixed; top: 20px; right: 20px; z-index: 100;
+        }
+        .lang-switcher-btn {
+            display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px;
+            background: rgba(255,255,255,0.2); backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.3); border-radius: 10px;
+            color: white; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+            transition: all 0.2s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        .lang-switcher-btn:hover { background: rgba(255,255,255,0.3); }
+        .lang-dropdown {
+            position: absolute; top: calc(100% + 8px); right: 0; background: white;
+            border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.15); overflow: hidden;
+            min-width: 160px; border: 1px solid #e5e7eb; transition: all 0.2s ease;
+            transform-origin: top right;
+        }
+        .lang-dropdown-hidden { opacity: 0; transform: scale(0.95) translateY(-5px); pointer-events: none; }
+        .lang-option {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 16px; cursor: pointer; transition: background 0.15s ease;
+            font-size: 0.85rem; font-weight: 500; color: #374151;
+        }
+        .lang-option:hover { background-color: #f3f4f6; }
+        .lang-option:first-child { border-bottom: 1px solid #f3f4f6; }
+        .lang-check { color: #2563eb; font-weight: 700; font-size: 1rem; transition: opacity 0.2s; }
     </style>
 </head>
 <body>
@@ -24,21 +53,42 @@
         <div class="gradient-overlay"></div>
     </div>
 
+    <!-- LANGUAGE SWITCHER -->
+    <div class="lang-switcher-container">
+        <button id="lang-switcher-btn" class="lang-switcher-btn" onclick="toggleLangDropdown(event)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            <span id="lang-btn-text">Español</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div id="lang-dropdown" class="lang-dropdown lang-dropdown-hidden">
+            <div class="lang-option" data-lang="es" onclick="setLanguage('es')">
+                <span>🇪🇸 Español</span>
+                <span class="lang-check">✓</span>
+            </div>
+            <div class="lang-option" data-lang="en" onclick="setLanguage('en')">
+                <span>🇺🇸 English</span>
+                <span class="lang-check" style="opacity: 0;">✓</span>
+            </div>
+        </div>
+    </div>
+
     <main class="glass-card p-5 animate-fade-in">
         <div class="icon-error shadow-lg">
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         </div>
         
-        <h1 class="display-4 fw-bold text-dark mb-3">404</h1>
-        <h3 class="fw-bold text-secondary mb-4">¡Ruta perdida!</h3>
-        <p class="text-muted mb-5 fs-5">
+        <h1 class="display-4 fw-bold text-dark mb-3" data-i18n="error.title">404</h1>
+        <h3 class="fw-bold text-secondary mb-4" data-i18n="error.subtitle">¡Ruta perdida!</h3>
+        <p class="text-muted mb-5 fs-5" data-i18n="error.message">
             Parece que el bus tomó un desvío. La parada que buscas no existe o ha sido movida.
         </p>
         
-        <a href="{% url 'rutas:buscar_rutas' %}" class="btn btn-lg w-100 py-3 shadow-sm fw-bold" style="background-color: #f3f4f6; color: #4b5563; border-radius: 1rem;">
+        <a href="{% url 'rutas:buscar_rutas' %}" class="btn btn-lg w-100 py-3 shadow-sm fw-bold" style="background-color: #f3f4f6; color: #4b5563; border-radius: 1rem;" data-i18n="error.back">
             🔙 Regresar al Buscador
         </a>
     </main>
+
+    <script src="{% static 'rutas/js/i18n.js' %}"></script>
 
 </body>
 </html>

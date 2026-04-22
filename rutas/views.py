@@ -4,16 +4,82 @@ from datetime import datetime, timedelta
 import json
 import google.generativeai as genai
 from django.conf import settings
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 
 # --- VISTAS DE AUTENTICACIÓN ---
-# (Nota: Estas se conectarán a la lógica real en el Paso 1 de Autenticación)
+
 def login_view(request):
+    # Si el usuario ya tiene sesión activa, redirigir al buscador
+    if request.user.is_authenticated:
+        return redirect('rutas:buscar_rutas')
+
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
+
+        # Django usa 'username' para autenticar, nosotros usamos el email como username
+        user = authenticate(request, username=email, password=password)
+
+        if user is not None:
+            login(request, user)
+            return redirect('rutas:buscar_rutas')
+        else:
+            messages.error(request, 'Correo o contraseña incorrectos. Inténtalo de nuevo.')
+
     return render(request, 'rutas/login.html')
 
+
 def registro_view(request):
+    # Si el usuario ya tiene sesión activa, redirigir al buscador
+    if request.user.is_authenticated:
+        return redirect('rutas:buscar_rutas')
+
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre', '').strip()
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
+        password2 = request.POST.get('password2', '')
+
+        # Validaciones
+        if not nombre or not email or not password:
+            messages.error(request, 'Todos los campos son obligatorios.')
+        elif password != password2:
+            messages.error(request, 'Las contraseñas no coinciden.')
+        elif len(password) < 8:
+            messages.error(request, 'La contraseña debe tener al menos 8 caracteres.')
+        elif User.objects.filter(username=email).exists():
+            messages.error(request, 'Ya existe una cuenta con este correo electrónico.')
+        else:
+            try:
+                # Creamos el usuario: usamos email como username
+                user = User.objects.create_user(
+                    username=email,
+                    email=email,
+                    password=password,
+                    first_name=nombre.split(' ')[0],
+                    last_name=' '.join(nombre.split(' ')[1:]) if len(nombre.split(' ')) > 1 else '',
+                )
+                # Login automático después del registro
+                login(request, user)
+                messages.success(request, f'¡Bienvenido/a {nombre}! Tu cuenta ha sido creada exitosamente.')
+                return redirect('rutas:buscar_rutas')
+            except Exception as e:
+                messages.error(request, 'Ocurrió un error al crear la cuenta. Inténtalo de nuevo.')
+
     return render(request, 'rutas/registro.html')
 
+
+def logout_view(request):
+    logout(request)
+    messages.info(request, 'Has cerrado sesión correctamente.')
+    return redirect('rutas:login')
+
+
 # --- VISTA PRINCIPAL (BUSCADOR) con Robustez ---
+@login_required
 def buscar_rutas(request):
     lugares = Lugar.objects.all()
     rutas_directas = []
@@ -97,6 +163,7 @@ def buscar_rutas(request):
     return render(request, 'rutas/inicio.html', context)
 
 # --- VISTA DETALLES con get_object_or_404 ---
+@login_required
 def detalle_ruta(request, ruta_id):
     # ROBUSTEZ: Si la ruta no existe, muestra 404 en lugar de error 500
     ruta1 = get_object_or_404(Ruta, id=ruta_id)
@@ -273,6 +340,7 @@ def detalle_ruta(request, ruta_id):
     return render(request, 'rutas/detalles.html', context)
 
 # --- VISTA MAPA INTERACTIVO con get_object_or_404 ---
+@login_required
 def mapa_ruta(request, ruta_id):
     ruta1 = get_object_or_404(Ruta, id=ruta_id)
     tramo2_id = request.GET.get('tramo2')

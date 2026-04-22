@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -30,6 +31,31 @@
         .custom-marker.active { background-color: #ea580c; transform: scale(1.2); z-index: 1000 !important; }
         .custom-marker.transbordo { background-color: #f59e0b; }
         .custom-marker.destino { background-color: #0d9488; }
+
+        /* ===== LANGUAGE SWITCHER (BLUE HEADER) ===== */
+        .lang-switcher-inline { position: relative; }
+        .lang-switcher-btn-blue {
+            display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px;
+            background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 8px; color: white; font-size: 0.75rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s ease;
+        }
+        .lang-switcher-btn-blue:hover { background: rgba(255,255,255,0.3); }
+        .lang-dropdown-blue {
+            position: absolute; top: calc(100% + 8px); right: 0; background: white;
+            border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.15); overflow: hidden;
+            min-width: 150px; border: 1px solid #e5e7eb; transition: all 0.2s ease;
+            transform-origin: top right; z-index: 100;
+        }
+        .lang-dropdown-hidden { opacity: 0; transform: scale(0.95) translateY(-5px); pointer-events: none; }
+        .lang-option {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 16px; cursor: pointer; transition: background 0.15s ease;
+            font-size: 0.85rem; font-weight: 500; color: #374151;
+        }
+        .lang-option:hover { background-color: #f3f4f6; }
+        .lang-option:first-child { border-bottom: 1px solid #f3f4f6; }
+        .lang-check { color: #2563eb; font-weight: 700; font-size: 1rem; transition: opacity 0.2s; }
     </style>
 </head>
 <body>
@@ -47,6 +73,24 @@
                 <p class="text-sm text-blue-200">From {{ origen_nombre }}</p>
             </div>
         </div>
+        <!-- LANGUAGE SWITCHER -->
+        <div class="lang-switcher-inline">
+            <button id="lang-switcher-btn" class="lang-switcher-btn-blue" onclick="toggleLangDropdown(event)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <span id="lang-btn-text">Español</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div id="lang-dropdown" class="lang-dropdown-blue lang-dropdown-hidden">
+                <div class="lang-option" data-lang="es" onclick="setLanguage('es')">
+                    <span>🇪🇸 Español</span>
+                    <span class="lang-check">✓</span>
+                </div>
+                <div class="lang-option" data-lang="en" onclick="setLanguage('en')">
+                    <span>🇺🇸 English</span>
+                    <span class="lang-check" style="opacity: 0;">✓</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div id="map"></div>
@@ -57,7 +101,7 @@
             <div class="border-b-4 border-blue-600 bg-gradient-to-br from-blue-50 to-white p-6">
                 <div class="flex items-start justify-between mb-4">
                     <div>
-                        <h2 class="text-2xl font-bold text-gray-900 mb-1">Route Information</h2>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-1" data-i18n="map.route_info">Información de Ruta</h2>
                         <p class="text-sm text-gray-600">Route from {{ origen_nombre }} to {{ destino_nombre }}</p>
                     </div>
                 </div>
@@ -65,7 +109,7 @@
                 <div class="mb-6 p-4 bg-white rounded-xl shadow-sm border border-gray-200">
                     <div class="flex items-center gap-2 mb-3">
                         <svg class="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/></svg>
-                        <h3 class="font-bold text-gray-900">Buses to Take</h3>
+                        <h3 class="font-bold text-gray-900" data-i18n="map.buses_title">Buses a Tomar</h3>
                     </div>
                     <div class="flex flex-wrap gap-2">
                         {% for bus in buses %}
@@ -80,11 +124,11 @@
                 <div class="mb-6 p-4 bg-white rounded-xl shadow-sm border border-gray-200">
                     <div class="flex items-center gap-2 mb-3">
                         <svg class="w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                        <h3 class="font-bold text-gray-900">Trip Costs</h3>
+                        <h3 class="font-bold text-gray-900" data-i18n="map.trip_costs">Costos del Viaje</h3>
                     </div>
                     <div class="space-y-2">
                         <div class="flex justify-between items-center">
-                            <span class="font-bold text-gray-900">Total Fare:</span>
+                            <span class="font-bold text-gray-900" data-i18n="map.total_fare">Tarifa Total:</span>
                             <span class="font-bold text-blue-600 text-lg">${{ precio_total }} COP</span>
                         </div>
                     </div>
@@ -93,20 +137,20 @@
                 <div class="mb-6 p-4 bg-white rounded-xl shadow-sm border border-gray-200">
                     <div class="flex items-center gap-2 mb-3">
                         <svg class="w-5 h-5 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
-                        <h3 class="font-bold text-gray-900">Route Details</h3>
+                        <h3 class="font-bold text-gray-900" data-i18n="map.route_details">Detalles de Ruta</h3>
                     </div>
                     <div class="space-y-3 text-sm">
                         <div class="flex items-start gap-3">
                             <svg class="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                             <div>
-                                <p class="font-medium text-gray-900">Estimated duration</p>
+                                <p class="font-medium text-gray-900" data-i18n="map.estimated_duration">Duración estimada</p>
                                 <p class="text-gray-600">{{ tiempo_total }} min</p>
                             </div>
                         </div>
                         <div class="flex items-start gap-3">
                             <svg class="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
                             <div>
-                                <p class="font-medium text-gray-900">Total stops</p>
+                                <p class="font-medium text-gray-900" data-i18n="map.total_stops">Total de paradas</p>
                                 <p class="text-gray-600">{{ total_paradas }} stops including origin and destination</p>
                             </div>
                         </div>
@@ -116,7 +160,7 @@
                 <div class="mb-6 p-4 bg-white rounded-xl shadow-sm border border-gray-200">
                     <div class="flex items-center gap-2 mb-3">
                         <svg class="w-5 h-5 text-orange-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
-                        <h3 class="font-bold text-gray-900">Main Streets</h3>
+                        <h3 class="font-bold text-gray-900" data-i18n="map.main_streets">Calles Principales</h3>
                     </div>
                     <ul class="space-y-2 text-sm text-gray-700">
                         {% for calle in calles %}
@@ -130,7 +174,7 @@
             </div>
 
             <div class="p-6 pb-2 bg-white">
-                <h3 class="text-xl font-bold text-gray-800">Step-by-Step Navigation</h3>
+                <h3 class="text-xl font-bold text-gray-800" data-i18n="map.step_nav">Navegación Paso a Paso</h3>
             </div>
 
             <div class="p-6 pt-2" id="steps-container"></div>
@@ -292,5 +336,6 @@
         setTimeout(() => { goToStep(0); }, 1000);
 
     </script>
+    <script src="{% static 'rutas/js/i18n.js' %}"></script>
 </body>
 </html>
