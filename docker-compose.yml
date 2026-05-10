@@ -2,30 +2,35 @@ version: '3.8'
 
 services:
   db:
-    image: postgres:15-alpine # Versión Alpine, súper ligera para no consumir mucha RAM
+    image: postgres:15-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=rutaseafit_db
       - POSTGRES_USER=eafit_admin
       - POSTGRES_PASSWORD=supersecreto_local
-    ports:
-      - "5433:5432"
+    # En AWS no necesitas mapear el puerto 5433 al host a menos que 
+    # quieras entrar desde afuera a la DB. Internamente usan el 5432.
+    expose:
+      - "5432"
 
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U eafit_admin -d rutaseafit_db"]
       interval: 5s
       timeout: 5s
       retries: 5
-      
 
   web:
     build: .
-    command: python manage.py runserver 0.0.0.0:8000
+    # CAMBIO 1: Ejecutar migraciones antes de arrancar el servidor
+    command: >
+      sh -c "python manage.py migrate && 
+             python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/app
     ports:
-      - "8000:8000"
+      # CAMBIO 2: Mapear el puerto 80 (HTTP estándar) al 8000 de Django
+      - "80:8000"
     environment:
       - DB_NAME=rutaseafit_db
       - DB_USER=eafit_admin
@@ -36,5 +41,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
 volumes:
   postgres_data:

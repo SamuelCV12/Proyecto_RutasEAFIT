@@ -15,3 +15,10 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # Copiamos el resto del código del proyecto al contenedor
 COPY . /app/
+
+# Exponemos el puerto 8000 que es el que usa Django por defecto
+EXPOSE 8000
+
+# Comando para arrancar la aplicación
+# Usamos 0.0.0.0 para que el contenedor acepte conexiones externas
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
